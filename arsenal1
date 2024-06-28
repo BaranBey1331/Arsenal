@@ -1,15 +1,27 @@
-local AimbotEnabled = false
-local Target = nil
-local Smoothness = 0.1
-local AimRange = 650
-local Accuracy = 0.9
+-- Değişkenler
+local AimRange = 100 -- Hedefleme mesafesi
+local AimSpeed = 0.1 -- Hedefleme hızı
+local Smoothness = 0.5 -- Hedefleme yumuşaklığı
+local Accuracy = 0.8 -- Hedefleme doğruluğu
+local Target = nil -- Hedef oyuncusu
 
+-- UI
+local AimbotFrame = Instance.new("Frame")
+AimbotFrame.Parent = game.CoreGui
+AimbotFrame.Position = UDim2.new(0.5, -100, 0.1, -100)
+AimbotFrame.Size = UDim2.new(0, 250, 0, 150)
+AimbotFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimbotFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
+AimbotFrame.CornerRadius = UDim.new(0, 10)
+AimbotFrame.Draggable = true
+
+-- Hedefi bulma
 local function FindTarget()
     local ClosestTarget = nil
     local ClosestDistance = math.huge
-    for _, Player in pairs(Players:GetPlayers()) do
-        if Player ~= LocalPlayer and Player.Character and Player.Character:FindFirstChild("Head") and Player.Team ~= LocalPlayer.Team then
-            local Distance = (Player.Character.Head.Position - LocalPlayer.Character.Head.Position).magnitude
+    for _, Player in pairs(game.Players:GetPlayers()) do
+        if Player ~= game.Players.LocalPlayer and Player.Character and Player.Character:FindFirstChild("Head") then
+            local Distance = (Player.Character.Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude
             if Distance < ClosestDistance and Distance <= AimRange then
                 ClosestDistance = Distance
                 ClosestTarget = Player
@@ -19,23 +31,25 @@ local function FindTarget()
     return ClosestTarget
 end
 
+-- Hedefi hedefleme
 local function AimAtHead(Target)
     if Target then
         local Head = Target.Character:FindFirstChild("Head")
         if Head then
-            local Mouse = UserInputService:GetMouseLocation()
-            local ScreenPoint = Camera:WorldToScreenPoint(Head.Position)
-            if ScreenPoint.Z > 0 then -- Ekranın dışında değilse
+            local Mouse = game.UserInputService:GetMouseLocation()
+            local ScreenPoint = game.Workspace.CurrentCamera:WorldToScreenPoint(Head.Position)
+            if ScreenPoint.Z > 0 then
                 local DeltaX = ScreenPoint.X - Mouse.X
                 local DeltaY = ScreenPoint.Y - Mouse.Y
-                local AimX = Mouse.X + DeltaX * Smoothness * Accuracy
-                local AimY = Mouse.Y + DeltaY * Smoothness * Accuracy
-                UserInputService:SetMouseLocation(AimX, AimY)
+                local AimX = Mouse.X + DeltaX * Smoothness * Accuracy * AimSpeed
+                local AimY = Mouse.Y + DeltaY * Smoothness * Accuracy * AimSpeed
+                game.UserInputService:SetMouseLocation(AimX, AimY)
             end
         end
     end
 end
 
+-- Hedefi güncelleme
 local function UpdateTarget(Target)
     if Target then
         if Target.Character and Target.Character:FindFirstChild("Humanoid") then
@@ -47,6 +61,7 @@ local function UpdateTarget(Target)
     end
 end
 
+-- Hedefi temizleme
 local function ClearTarget(Target)
     if Target then
         if Target.Character and Target.Character:FindFirstChild("Humanoid") then
@@ -58,57 +73,14 @@ local function ClearTarget(Target)
     end
 end
 
-local function AimbotLoop()
-    if AimbotEnabled then
-        Target = FindTarget()
+-- Döngü
+while true do
+    Target = FindTarget()
+    if Target then
         UpdateTarget(Target)
-        if Target then
-            AimAtHead(Target)
-        else
-            ClearTarget(Target)
-        end
-    end
-end
-
-RunService.Heartbeat:Connect(AimbotLoop)
-
--- UI Oluşturma
-local AimbotFrame = Instance.new("Frame")
-AimbotFrame.Parent = game.CoreGui
-AimbotFrame.Position = UDim2.new(0.5, -100, 0.1, -100) -- UI'nin konumu üstte
-AimbotFrame.Size = UDim2.new(0, 200, 0, 100)
-AimbotFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-AimbotFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
-AimbotFrame.CornerRadius = UDim.new(0, 5)
-AimbotFrame.Draggable = true -- UI'nin hareket edebilir olması
-
-local AimbotLabel = Instance.new("TextLabel")
-AimbotLabel.Parent = AimbotFrame
-AimbotLabel.Text = "Aimbot"
-AimbotLabel.TextColor3 = Color3.new(1, 1, 1)
-AimbotLabel.Size = UDim2.new(0, 100, 0, 20)
-AimbotLabel.Position = UDim2.new(0.5, -50, 0, 10)
-AimbotLabel.FontSize = Enum.FontSize.Size14
-AimbotLabel.Font = Enum.Font.SourceSans
-AimbotLabel.TextWrapped = true
-
-local AimbotToggle = Instance.new("TextButton")
-AimbotToggle.Parent = AimbotFrame
-AimbotToggle.Text = "Etkinleştir"
-AimbotToggle.TextColor3 = Color3.new(1, 1, 1)
-AimbotToggle.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-AimbotToggle.BorderColor3 = Color3.fromRGB(50, 50, 50)
-AimbotToggle.CornerRadius = UDim.new(0, 5)
-AimbotToggle.Size = UDim2.new(0, 100, 0, 25)
-AimbotToggle.Position = UDim2.new(0.5, -50, 0, 40)
-AimbotToggle.Font = Enum.Font.SourceSans
-AimbotToggle.FontSize = Enum.FontSize.Size14
-
-AimbotToggle.MouseButton1Click:Connect(function()
-    AimbotEnabled = not AimbotEnabled
-    if AimbotEnabled then
-        AimbotToggle.Text = "Devre Dışı Bırak"
+        AimAtHead(Target)
     else
-        AimbotToggle.Text = "Etkinleştir"
+        ClearTarget(Target)
     end
-end)
+    wait(0.01)
+end
