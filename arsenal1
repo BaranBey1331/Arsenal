@@ -25,11 +25,35 @@ local function AimAtHead(Target)
         if Head then
             local Mouse = UserInputService:GetMouseLocation()
             local ScreenPoint = Camera:WorldToScreenPoint(Head.Position)
-            local DeltaX = ScreenPoint.X - Mouse.X
-            local DeltaY = ScreenPoint.Y - Mouse.Y
-            local AimX = Mouse.X + DeltaX * Smoothness * Accuracy
-            local AimY = Mouse.Y + DeltaY * Smoothness * Accuracy
-            UserInputService:SetMouseLocation(AimX, AimY)
+            if ScreenPoint.Z > 0 then -- Ekranın dışında değilse
+                local DeltaX = ScreenPoint.X - Mouse.X
+                local DeltaY = ScreenPoint.Y - Mouse.Y
+                local AimX = Mouse.X + DeltaX * Smoothness * Accuracy
+                local AimY = Mouse.Y + DeltaY * Smoothness * Accuracy
+                UserInputService:SetMouseLocation(AimX, AimY)
+            end
+        end
+    end
+end
+
+local function UpdateTarget(Target)
+    if Target then
+        if Target.Character and Target.Character:FindFirstChild("Humanoid") then
+            Target.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+            Target.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.None
+            Target.Character.Humanoid.Transparency = 0.5
+            Target.Character.Humanoid.Color = Color3.new(1, 0, 0)
+        end
+    end
+end
+
+local function ClearTarget(Target)
+    if Target then
+        if Target.Character and Target.Character:FindFirstChild("Humanoid") then
+            Target.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Classic
+            Target.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.Classic
+            Target.Character.Humanoid.Transparency = 1
+            Target.Character.Humanoid.Color = Color3.new(1, 1, 1)
         end
     end
 end
@@ -37,21 +61,11 @@ end
 local function AimbotLoop()
     if AimbotEnabled then
         Target = FindTarget()
+        UpdateTarget(Target)
         if Target then
-            if Target.Character and Target.Character:FindFirstChild("Humanoid") then
-                Target.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-                Target.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.None
-                Target.Character.Humanoid.Transparency = 0.5
-                Target.Character.Humanoid.Color = Color3.new(1, 0, 0) -- Kırmızı renk
-            end
             AimAtHead(Target)
         else
-            if Target and Target.Character and Target.Character:FindFirstChild("Humanoid") then
-                Target.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Classic
-                Target.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.Classic
-                Target.Character.Humanoid.Transparency = 1
-                Target.Character.Humanoid.Color = Color3.new(1, 1, 1) -- Normal renk
-            end
+            ClearTarget(Target)
         end
     end
 end
@@ -61,11 +75,12 @@ RunService.Heartbeat:Connect(AimbotLoop)
 -- UI Oluşturma
 local AimbotFrame = Instance.new("Frame")
 AimbotFrame.Parent = game.CoreGui
-AimbotFrame.Position = UDim2.new(0.5, -100, 0.5, -100)
+AimbotFrame.Position = UDim2.new(0.5, -100, 0.1, -100) -- UI'nin konumu üstte
 AimbotFrame.Size = UDim2.new(0, 200, 0, 100)
 AimbotFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 AimbotFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
 AimbotFrame.CornerRadius = UDim.new(0, 5)
+AimbotFrame.Draggable = true -- UI'nin hareket edebilir olması
 
 local AimbotLabel = Instance.new("TextLabel")
 AimbotLabel.Parent = AimbotFrame
@@ -97,5 +112,3 @@ AimbotToggle.MouseButton1Click:Connect(function()
         AimbotToggle.Text = "Etkinleştir"
     end
 end)
-
--- UI'yi daha da özelleştirebilirsin!
