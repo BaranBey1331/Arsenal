@@ -1,63 +1,16 @@
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
-
 local AimbotEnabled = false
 local Target = nil
 local Smoothness = 0.1
-
-local AimbotUI = Instance.new("ScreenGui")
-AimbotUI.Parent = LocalPlayer.PlayerGui
-AimbotUI.Name = "AimbotUI"
-
-local Frame = Instance.new("Frame")
-Frame.Parent = AimbotUI
-Frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
-Frame.BorderSizePixel = 0
-Frame.Position = UDim2.new(0.5, -75, 0, -25)
-Frame.Size = UDim2.new(0, 150, 0, 100)
-Frame.Draggable = true
-Frame.Selectable = true
-
-local ToggleButton = Instance.new("TextButton")
-ToggleButton.Parent = Frame
-ToggleButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-ToggleButton.TextColor3 = Color3.new(1, 1, 1)
-ToggleButton.Text = "Aimbot Etkinleştir"
-ToggleButton.TextSize = 14
-ToggleButton.Position = UDim2.new(0.1, 0, 0.1, 0)
-ToggleButton.Size = UDim2.new(0, 100, 0, 20)
-ToggleButton.Font = Enum.Font.GothamSemibold
-
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Parent = Frame
-MinimizeButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-MinimizeButton.TextColor3 = Color3.new(1, 1, 1)
-MinimizeButton.Text = "-"
-MinimizeButton.TextSize = 14
-MinimizeButton.Position = UDim2.new(0.9, 0, 0.1, 0)
-MinimizeButton.Size = UDim2.new(0, 20, 0, 20)
-MinimizeButton.Font = Enum.Font.GothamSemibold
-
-local Indicator = Instance.new("Frame")
-Indicator.Parent = Frame
-Indicator.BackgroundColor3 = Color3.new(0, 1, 0)
-Indicator.BorderSizePixel = 0
-Indicator.Position = UDim2.new(0.9, 0, 0.4, 0)
-Indicator.Size = UDim2.new(0, 10, 0, 10)
-Indicator.Visible = false
+local AimRange = 650
+local Accuracy = 0.9
 
 local function FindTarget()
-    local Character = LocalPlayer.Character
-    local Head = Character:FindFirstChild("Head")
     local ClosestTarget = nil
     local ClosestDistance = math.huge
     for _, Player in pairs(Players:GetPlayers()) do
         if Player ~= LocalPlayer and Player.Character and Player.Character:FindFirstChild("Head") and Player.Team ~= LocalPlayer.Team then
-            local Distance = (Player.Character.Head.Position - Head.Position).magnitude
-            if Distance < ClosestDistance then
+            local Distance = (Player.Character.Head.Position - LocalPlayer.Character.Head.Position).magnitude
+            if Distance < ClosestDistance and Distance <= AimRange then
                 ClosestDistance = Distance
                 ClosestTarget = Player
             end
@@ -66,7 +19,7 @@ local function FindTarget()
     return ClosestTarget
 end
 
-local function AimAtTarget()
+local function AimAtHead(Target)
     if Target then
         local Head = Target.Character:FindFirstChild("Head")
         if Head then
@@ -74,33 +27,75 @@ local function AimAtTarget()
             local ScreenPoint = Camera:WorldToScreenPoint(Head.Position)
             local DeltaX = ScreenPoint.X - Mouse.X
             local DeltaY = ScreenPoint.Y - Mouse.Y
-            local AimX = Mouse.X + DeltaX * Smoothness
-            local AimY = Mouse.Y + DeltaY * Smoothness
+            local AimX = Mouse.X + DeltaX * Smoothness * Accuracy
+            local AimY = Mouse.Y + DeltaY * Smoothness * Accuracy
             UserInputService:SetMouseLocation(AimX, AimY)
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, Head.Position)
-            Target.Character.Head.BrickColor = BrickColor.new("Really red")
         end
     end
 end
 
-ToggleButton.MouseButton1Click:Connect(function()
-    AimbotEnabled = not AimbotEnabled
-    ToggleButton.Text = AimbotEnabled and "Aimbot Kapat" or "Aimbot Etkinleştir"
-    Indicator.Visible = AimbotEnabled
-    Indicator.BackgroundColor3 = AimbotEnabled and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
-end)
-
-MinimizeButton.MouseButton1Click:Connect(function()
-    Frame.Size = Frame.Size == UDim2.new(0, 150, 0, 100) and UDim2.new(0, 50, 0, 25) or UDim2.new(0, 150, 0, 100)
-    Frame.Position = Frame.Size == UDim2.new(0, 150, 0, 100) and UDim2.new(0.5, -75, 0, -25) or UDim2.new(0.5, -25, 0, -12.5)
-    ToggleButton.Size = Frame.Size == UDim2.new(0, 150, 0, 100) and UDim2.new(0, 100, 0, 20) or UDim2.new(0, 40, 0, 15)
-    MinimizeButton.Size = Frame.Size == UDim2.new(0, 150, 0, 100) and UDim2.new(0, 20, 0, 20) or UDim2.new(0, 15, 0, 15)
-    Indicator.Size = Frame.Size == UDim2.new(0, 150, 0, 100) and UDim2.new(0, 10, 0, 10) or UDim2.new(0, 5, 0, 5)
-end)
-
-RunService.Heartbeat:Connect(function()
+local function AimbotLoop()
     if AimbotEnabled then
         Target = FindTarget()
-        AimAtTarget()
+        if Target then
+            if Target.Character and Target.Character:FindFirstChild("Humanoid") then
+                Target.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+                Target.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.None
+                Target.Character.Humanoid.Transparency = 0.5
+                Target.Character.Humanoid.Color = Color3.new(1, 0, 0) -- Kırmızı renk
+            end
+            AimAtHead(Target)
+        else
+            if Target and Target.Character and Target.Character:FindFirstChild("Humanoid") then
+                Target.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Classic
+                Target.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.Classic
+                Target.Character.Humanoid.Transparency = 1
+                Target.Character.Humanoid.Color = Color3.new(1, 1, 1) -- Normal renk
+            end
+        end
+    end
+end
+
+RunService.Heartbeat:Connect(AimbotLoop)
+
+-- UI Oluşturma
+local AimbotFrame = Instance.new("Frame")
+AimbotFrame.Parent = game.CoreGui
+AimbotFrame.Position = UDim2.new(0.5, -100, 0.5, -100)
+AimbotFrame.Size = UDim2.new(0, 200, 0, 100)
+AimbotFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimbotFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
+AimbotFrame.CornerRadius = UDim.new(0, 5)
+
+local AimbotLabel = Instance.new("TextLabel")
+AimbotLabel.Parent = AimbotFrame
+AimbotLabel.Text = "Aimbot"
+AimbotLabel.TextColor3 = Color3.new(1, 1, 1)
+AimbotLabel.Size = UDim2.new(0, 100, 0, 20)
+AimbotLabel.Position = UDim2.new(0.5, -50, 0, 10)
+AimbotLabel.FontSize = Enum.FontSize.Size14
+AimbotLabel.Font = Enum.Font.SourceSans
+AimbotLabel.TextWrapped = true
+
+local AimbotToggle = Instance.new("TextButton")
+AimbotToggle.Parent = AimbotFrame
+AimbotToggle.Text = "Etkinleştir"
+AimbotToggle.TextColor3 = Color3.new(1, 1, 1)
+AimbotToggle.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+AimbotToggle.BorderColor3 = Color3.fromRGB(50, 50, 50)
+AimbotToggle.CornerRadius = UDim.new(0, 5)
+AimbotToggle.Size = UDim2.new(0, 100, 0, 25)
+AimbotToggle.Position = UDim2.new(0.5, -50, 0, 40)
+AimbotToggle.Font = Enum.Font.SourceSans
+AimbotToggle.FontSize = Enum.FontSize.Size14
+
+AimbotToggle.MouseButton1Click:Connect(function()
+    AimbotEnabled = not AimbotEnabled
+    if AimbotEnabled then
+        AimbotToggle.Text = "Devre Dışı Bırak"
+    else
+        AimbotToggle.Text = "Etkinleştir"
     end
 end)
+
+-- UI'yi daha da özelleştirebilirsin!
