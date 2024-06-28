@@ -6,42 +6,46 @@ local frame = Instance.new("Frame")
 frame.Parent = screenGui
 frame.BackgroundColor3 = Color3.new(0.1, 0.1, 0.1)
 frame.BorderSizePixel = 0
-frame.Position = UDim2.new(0.5, -100, 0.1, 0)
-frame.Size = UDim2.new(0, 200, 0, 50)
+frame.Position = UDim2.new(0.5, -50, 0.2, -25)
+frame.Size = UDim2.new(0, 150, 0, 100)
 frame.Draggable = true
 frame.Selectable = true
+frame.Active = false
 
 local toggleButton = Instance.new("TextButton")
 toggleButton.Parent = frame
 toggleButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
 toggleButton.TextColor3 = Color3.new(1, 1, 1)
-toggleButton.Text = "Etkin"
+toggleButton.Text = "Aimbot Etkin"
 toggleButton.TextSize = 16
-toggleButton.Position = UDim2.new(0.5, -50, 0.2, 0)
+toggleButton.Position = UDim2.new(0.1, 0, 0.1, 0)
 toggleButton.Size = UDim2.new(0, 100, 0, 25)
 toggleButton.Font = Enum.Font.GothamSemibold
 
 local indicator = Instance.new("Frame")
 indicator.Parent = frame
-indicator.BackgroundColor3 = Color3.new(0, 1, 0) -- Yeşil
+indicator.BackgroundColor3 = Color3.new(0, 1, 0)
 indicator.BorderSizePixel = 0
-indicator.Position = UDim2.new(0.5, -40, 0.6, 0)
+indicator.Position = UDim2.new(0.9, 0, 0.1, 0)
 indicator.Size = UDim2.new(0, 10, 0, 10)
 indicator.Visible = false
 
 local aimbotEnabled = false
 local target = nil
-local aimbotSpeed = 15000 -- 5 kat daha hızlı
-local aimbotRange = 100
-local predictionFactor = 5 -- 5 kat daha iyi tahmin
+local aimbotSpeed = 40000 -- Hız 2 Kat Arttırıldı
+local aimbotRange = 200 -- Menzil 2 Kat Arttırıldı
+local predictionFactor = 200 -- Tahmin Faktörü 2 Kat Arttırıldı
 
 local function aimAtTarget(target)
     local player = game.Players.LocalPlayer
     local camera = workspace.CurrentCamera
-    local targetPos = target.Head.Position
-    local targetVelocity = target.Character.Humanoid.MoveDirection * target.Character.Humanoid.WalkSpeed
-    local predictedPos = targetPos + targetVelocity * predictionFactor
-    camera.CFrame = camera.CFrame:lerp(camera.CFrame.lookAt(predictedPos).CFrame, aimbotSpeed / 1000)
+    local targetHead = target.Character:FindFirstChild("Head")
+    if targetHead then
+        local targetPos = targetHead.Position
+        local targetVelocity = target.Character.Humanoid.MoveDirection * target.Character.Humanoid.WalkSpeed
+        local predictedPos = targetPos + targetVelocity * predictionFactor
+        camera.CFrame = camera.CFrame:lerp(camera.CFrame.lookAt(predictedPos).CFrame, aimbotSpeed / 1000)
+    end
 end
 
 local function findTarget()
@@ -63,9 +67,17 @@ end
 
 toggleButton.MouseButton1Click:Connect(function()
     aimbotEnabled = not aimbotEnabled
-    toggleButton.Text = aimbotEnabled and "Devre Dışı" or "Etkin"
+    toggleButton.Text = aimbotEnabled and "Aimbot Devre Dışı" or "Aimbot Etkin"
     indicator.Visible = aimbotEnabled
     indicator.BackgroundColor3 = aimbotEnabled and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
+
+    if aimbotEnabled then
+        frame.Size = UDim2.new(0, 100, 0, 50)
+        frame.Position = UDim2.new(0.5, -50, 0.2, -25)
+    else
+        frame.Size = UDim2.new(0, 150, 0, 100)
+        frame.Position = UDim2.new(0.5, -50, 0.2, -25)
+    end
 end)
 
 while true do
