@@ -2,7 +2,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Camera = workspace.CurrentCamera
 
 local AimbotEnabled = false
 local Target = nil
@@ -77,6 +77,8 @@ local function AimAtTarget()
             local AimX = Mouse.X + DeltaX * Smoothness
             local AimY = Mouse.Y + DeltaY * Smoothness
             UserInputService:SetMouseLocation(AimX, AimY)
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, Head.Position)
+            Target.Character.Head.BrickColor = BrickColor.new("Really red")
         end
     end
 end
