@@ -1,136 +1,85 @@
-lua
---[[
-  Arsenal Cheat
-  This is a basic framework for an Arsenal cheat.
-  It includes aimbot, ESP, and wallhack functionality.
-  The GUI is minimal and the bypass is designed to be robust.
-]]--
+local aimbotEnabled = false
+local aimbotTarget = nil
+local aimbotFOV = 150
+local aimbotSmoothness = 0.01 -- Nişan alma yumuşaklığı (0-1 arası)
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+function findTarget()
+    local closestTarget = nil
+    local closestDistance = math.huge
 
--- GUI Setup
-local GUI = Instance.new("ScreenGui")
-GUI.Parent = game.CoreGui
-GUI.Name = "ArsenalCheat"
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character:FindFirstChild("Humanoid").Health > 0 then
+            local playerHead = player.Character.Head
+            local distance = (game.Players.LocalPlayer.Character.Head.Position - playerHead.Position).Magnitude
 
-local AimbotButton = Instance.new("TextButton")
-AimbotButton.Parent = GUI
-AimbotButton.Text = "Aimbot"
-AimbotButton.Position = UDim2.new(0.5, 0, 0.5, -50)
-AimbotButton.Size = UDim2.new(0, 100, 0, 50)
-AimbotButton.BackgroundColor3 = Color3.new(0, 0, 0)
-AimbotButton.TextColor3 = Color3.new(1, 1, 1)
-
-local ESPButton = Instance.new("TextButton")
-ESPButton.Parent = GUI
-ESPButton.Text = "ESP"
-ESPButton.Position = UDim2.new(0.5, 0, 0.5, 0)
-ESPButton.Size = UDim2.new(0, 100, 0, 50)
-ESPButton.BackgroundColor3 = Color3.new(0, 0, 0)
-ESPButton.TextColor3 = Color3.new(1, 1, 1)
-
-local WallhackButton = Instance.new("TextButton")
-WallhackButton.Parent = GUI
-WallhackButton.Text = "Wallhack"
-WallhackButton.Position = UDim2.new(0.5, 0, 0.5, 50)
-WallhackButton.Size = UDim2.new(0, 100, 0, 50)
-WallhackButton.BackgroundColor3 = Color3.new(0, 0, 0)
-WallhackButton.TextColor3 = Color3.new(1, 1, 1)
-
--- Aimbot Function
-local AimbotEnabled = false
-local function Aimbot()
-  if AimbotEnabled then
-    -- Aim at the closest enemy
-    local ClosestEnemy = nil
-    local ClosestDistance = math.huge
-    for _, Player in pairs(Players:GetPlayers()) do
-      if Player ~= LocalPlayer and Player.Character and Player.Character:FindFirstChild("Humanoid") and Player.Character:FindFirstChild("Humanoid").Health > 0 then
-        local Distance = (Player.Character.PrimaryPart.Position - LocalPlayer.Character.PrimaryPart.Position).Magnitude
-        if Distance < ClosestDistance then
-          ClosestDistance = Distance
-          ClosestEnemy = Player
+            if distance < closestDistance and math.deg(math.acos(playerHead.CFrame.LookVector:Dot(game.Players.LocalPlayer.Character.Head.CFrame.LookVector))) < aimbotFOV then
+                closestTarget = playerHead
+                closestDistance = distance
+            end
         end
-      end
     end
 
-    if ClosestEnemy then
-      -- Aim at the enemy's head
-      local AimTarget = ClosestEnemy.Character:FindFirstChild("Head")
-      if AimTarget then
-        LocalPlayer.Character:FindFirstChild("Humanoid").TargetPoint = AimTarget.Position
-      end
-    end
-  end
+    return closestTarget
 end
 
--- ESP Function
-local ESPEnabled = false
-local function ESP()
-  if ESPEnabled then
-    -- Highlight enemies through walls
-    for _, Player in pairs(Players:GetPlayers()) do
-      if Player ~= LocalPlayer and Player.Character and Player.Character:FindFirstChild("Humanoid") and Player.Character:FindFirstChild("Humanoid").Health > 0 then
-        local Box = Instance.new("BillboardGui")
-        Box.Parent = Player.Character:FindFirstChild("Head")
-        Box.Size = UDim2.new(1, 0, 1, 0)
-        Box.Adornee = Player.Character:FindFirstChild("Head")
-        Box.AlwaysOnTop = true
-        Box.StudsOffset = Vector3.new(0, 2, 0)
-        Box.BackgroundColor3 = Color3.new(1, 0, 0)
-        Box.Transparency = 0.5
-      end
+function aimAtTarget()
+    if aimbotTarget then
+        game.Players.LocalPlayer.Character.Head.CFrame = CFrame.new(aimbotTarget.Position)
     end
-  end
 end
 
--- Wallhack Function
-local WallhackEnabled = false
-local function Wallhack()
-  if WallhackEnabled then
-    -- Make walls transparent
-    for _, Object in pairs(game.Workspace:GetDescendants()) do
-      if Object:IsA("BasePart") and Object.Transparency < 1 then
-        Object.Transparency = 0.5
-      end
+game:GetService("RunService").Heartbeat:Connect(function()
+    if aimbotEnabled then
+        aimbotTarget = findTarget()
+        if aimbotTarget then
+            aimAtTarget()
+        end
     end
-  end
-end
-
--- Button Click Events
-AimbotButton.MouseButton1Click:Connect(function()
-  AimbotEnabled = not AimbotEnabled
-  if AimbotEnabled then
-    AimbotButton.Text = "Aimbot ON"
-  else
-    AimbotButton.Text = "Aimbot OFF"
-  end
 end)
 
-ESPButton.MouseButton1Click:Connect(function()
-  ESPEnabled = not ESPEnabled
-  if ESPEnabled then
-    ESPButton.Text = "ESP ON"
-  else
-    ESPButton.Text = "ESP OFF"
-  end
+game:GetService("UserInputService").InputBegan:Connect(function(inputObject, gameProcessedEvent)
+    if inputObject.KeyCode == Enum.KeyCode.F then
+        aimbotEnabled = not aimbotEnabled
+    end
 end)
 
-WallhackButton.MouseButton1Click:Connect(function()
-  WallhackEnabled = not WallhackEnabled
-  if WallhackEnabled then
-    WallhackButton.Text = "Wallhack ON"
-  else
-    WallhackButton.Text = "Wallhack OFF"
-  end
+local aimbotUI = Instance.new("ScreenGui")
+aimbotUI.Name = "AimbotUI"
+aimbotUI.Parent = game.CoreGui
+
+local aimbotFrame = Instance.new("Frame")
+aimbotFrame.Name = "AimbotFrame"
+aimbotFrame.Parent = aimbotUI
+aimbotFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+aimbotFrame.Size = UDim2.new(0, 100, 0, 50)
+aimbotFrame.Position = UDim2.new(0.5, -50, 0, 0)
+aimbotFrame.Draggable = true
+aimbotFrame.Active = true
+
+local aimbotButton = Instance.new("TextButton")
+aimbotButton.Name = "AimbotButton"
+aimbotButton.Parent = aimbotFrame
+aimbotButton.Text = "Aimbot"
+aimbotButton.Size = UDim2.new(0, 80, 0, 30)
+aimbotButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+aimbotButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+aimbotButton.Position = UDim2.new(0.5, -40, 0.1, 0)
+
+aimbotButton.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+    if aimbotEnabled then
+        aimbotButton.Text = "Aimbot (Açık)"
+    else
+        aimbotButton.Text = "Aimbot"
+    end
 end)
 
--- Run the functions
-RunService.Heartbeat:Connect(function()
-  Aimbot()
-  ESP()
-  Wallhack()
-end)
+local baranBeyLabel = Instance.new("TextLabel")
+baranBeyLabel.Name = "BaranBeyLabel"
+baranBeyLabel.Parent = aimbotFrame
+baranBeyLabel.Text = "BaranBey"
+baranBeyLabel.Size = UDim2.new(0, 50, 0, 15)
+baranBeyLabel.Position = UDim2.new(0, 5, 0.8, 0)
+baranBeyLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+baranBeyLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
+baranBeyLabel.FontSize = Enum.FontSize.Size10
