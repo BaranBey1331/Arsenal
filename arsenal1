@@ -1,85 +1,88 @@
-local aimbotEnabled = false
-local aimbotTarget = nil
-local aimbotFOV = 150
-local aimbotSmoothness = 0.01 -- Nişan alma yumuşaklığı (0-1 arası)
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game.Players.LocalPlayer.PlayerGui
+screenGui.Name = "AimbotUI"
 
-function findTarget()
+local frame = Instance.new("Frame")
+frame.Parent = screenGui
+frame.BackgroundColor3 = Color3.new(0, 0, 0)
+frame.BorderSizePixel = 0
+frame.Position = UDim2.new(0.5, -100, 0.5, -50)
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Draggable = true
+frame.Selectable = true
+
+local label = Instance.new("TextLabel")
+label.Parent = frame
+label.BackgroundColor3 = Color3.new(0, 0, 0)
+label.TextColor3 = Color3.new(1, 1, 1)
+label.Text = "Aimbot"
+label.TextSize = 16
+label.Position = UDim2.new(0.5, -50, 0, 10)
+label.Size = UDim2.new(0, 100, 0, 20)
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Parent = frame
+toggleButton.BackgroundColor3 = Color3.new(0, 0, 0)
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.Text = "Etkin"
+toggleButton.TextSize = 16
+toggleButton.Position = UDim2.new(0.5, -50, 0, 40)
+toggleButton.Size = UDim2.new(0, 100, 0, 20)
+
+local indicator = Instance.new("Frame")
+indicator.Parent = screenGui
+indicator.BackgroundColor3 = Color3.new(1, 0, 0)
+indicator.BorderSizePixel = 0
+indicator.Position = UDim2.new(0.5, -5, 0.9, -5)
+indicator.Size = UDim2.new(0, 10, 0, 10)
+indicator.Visible = false
+
+local aimbotEnabled = false
+local target = nil
+local aimbotSpeed = 5000
+local aimbotRange = 100
+local predictionFactor = 0.5
+
+local function aimAtTarget(target)
+    local player = game.Players.LocalPlayer
+    local camera = workspace.CurrentCamera
+    local targetPos = target.Head.Position
+    local targetVelocity = target.Character.Humanoid.MoveDirection * target.Character.Humanoid.WalkSpeed
+    local predictedPos = targetPos + targetVelocity * predictionFactor
+    local lookVector = (predictedPos - camera.CFrame.Position).unit
+    camera.CFrame = camera.CFrame:lerp(camera.CFrame.lookAt(camera.CFrame.Position, predictedPos).CFrame, aimbotSpeed / 1000)
+end
+
+local function findTarget()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
     local closestTarget = nil
     local closestDistance = math.huge
-
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character:FindFirstChild("Humanoid").Health > 0 then
-            local playerHead = player.Character.Head
-            local distance = (game.Players.LocalPlayer.Character.Head.Position - playerHead.Position).Magnitude
-
-            if distance < closestDistance and math.deg(math.acos(playerHead.CFrame.LookVector:Dot(game.Players.LocalPlayer.Character.Head.CFrame.LookVector))) < aimbotFOV then
-                closestTarget = playerHead
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character and v.Character:FindFirstChild("Head") and v.Team ~= player.Team then
+            local distance = (v.Character.Head.Position - character.Head.Position).magnitude
+            if distance < closestDistance and distance <= aimbotRange then
                 closestDistance = distance
+                closestTarget = v
             end
         end
     end
-
     return closestTarget
 end
 
-function aimAtTarget()
-    if aimbotTarget then
-        game.Players.LocalPlayer.Character.Head.CFrame = CFrame.new(aimbotTarget.Position)
-    end
-end
+toggleButton.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+    toggleButton.Text = aimbotEnabled and "Devre Dışı" or "Etkin"
+    indicator.Visible = aimbotEnabled
+end)
 
-game:GetService("RunService").Heartbeat:Connect(function()
+while true do
     if aimbotEnabled then
-        aimbotTarget = findTarget()
-        if aimbotTarget then
-            aimAtTarget()
+        if target then
+            aimAtTarget(target)
+        else
+            target = findTarget()
         end
     end
-end)
-
-game:GetService("UserInputService").InputBegan:Connect(function(inputObject, gameProcessedEvent)
-    if inputObject.KeyCode == Enum.KeyCode.F then
-        aimbotEnabled = not aimbotEnabled
-    end
-end)
-
-local aimbotUI = Instance.new("ScreenGui")
-aimbotUI.Name = "AimbotUI"
-aimbotUI.Parent = game.CoreGui
-
-local aimbotFrame = Instance.new("Frame")
-aimbotFrame.Name = "AimbotFrame"
-aimbotFrame.Parent = aimbotUI
-aimbotFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-aimbotFrame.Size = UDim2.new(0, 100, 0, 50)
-aimbotFrame.Position = UDim2.new(0.5, -50, 0, 0)
-aimbotFrame.Draggable = true
-aimbotFrame.Active = true
-
-local aimbotButton = Instance.new("TextButton")
-aimbotButton.Name = "AimbotButton"
-aimbotButton.Parent = aimbotFrame
-aimbotButton.Text = "Aimbot"
-aimbotButton.Size = UDim2.new(0, 80, 0, 30)
-aimbotButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-aimbotButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-aimbotButton.Position = UDim2.new(0.5, -40, 0.1, 0)
-
-aimbotButton.MouseButton1Click:Connect(function()
-    aimbotEnabled = not aimbotEnabled
-    if aimbotEnabled then
-        aimbotButton.Text = "Aimbot (Açık)"
-    else
-        aimbotButton.Text = "Aimbot"
-    end
-end)
-
-local baranBeyLabel = Instance.new("TextLabel")
-baranBeyLabel.Name = "BaranBeyLabel"
-baranBeyLabel.Parent = aimbotFrame
-baranBeyLabel.Text = "BaranBey"
-baranBeyLabel.Size = UDim2.new(0, 50, 0, 15)
-baranBeyLabel.Position = UDim2.new(0, 5, 0.8, 0)
-baranBeyLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-baranBeyLabel.TextColor3 = Color3.fromRGB(0, 0, 0)
-baranBeyLabel.FontSize = Enum.FontSize.Size10
+    wait(0.01)
+end
