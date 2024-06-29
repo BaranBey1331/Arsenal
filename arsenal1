@@ -9,7 +9,7 @@ AimbotFrame.CornerRadius = UDim.new(0, 10)
 
 local TargetName = Instance.new("TextLabel")
 TargetName.Name = "TargetName"
-TargetName.Parent = AimbotFrame
+TargetName.Parent = AimbotFrame -- CoreGui'ye değil, AimbotFrame'e ekle
 TargetName.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 TargetName.TextColor3 = Color3.fromRGB(255, 255, 255)
 TargetName.Text = "Hedef Yok"
