@@ -92,23 +92,21 @@ local function FindTarget()
 end
 
 local function AimAtHead(target)
-    local targetHead = target:FindFirstChild("Head") -- Head parçacığını arıyor
-    if targetHead then
-        local targetHeadCFrame = targetHead.CFrame
-        local smoothFactor = 0.1
-        RootPart.CFrame = RootPart.CFrame:lerp(targetHeadCFrame, smoothFactor)
+    if target then
+        local head = target:FindFirstChild("Head")
+        if head then
+            local lookVector = (head.Position - RootPart.Position).Unit
+            RootPart.CFrame = CFrame.new(RootPart.Position) * CFrame.lookAt(RootPart.Position, RootPart.Position + lookVector)
+        end
     end
 end
 
--- AutoFire fonksiyonu kaldırıldı
-
-game:GetService("RunService").Heartbeat:Connect(function()
+local HeartbeatConnection = game.RunService.Heartbeat:Connect(function()
     if AimbotEnabled then
         local target = FindTarget()
         if target then
-            TargetName.Text = "Hedef: " .. target.Parent.Name
+            TargetName.Text = target.Parent.Name
             AimAtHead(target)
-            -- AutoFire() -- Otomatik ateş özelliği (Kaldırıldı)
         else
             TargetName.Text = "Hedef Yok"
         end
@@ -118,3 +116,6 @@ end)
 AimRangeSlider.Changed:Connect(function()
     AimRangeLabel.Text = "Hedef Aralığı: " .. tostring(AimRangeSlider.Value)
 end)
+
+-- Kodu oyunun 'ServerScriptService'ine eklemeniz gerekiyor.
+-- Bu kodun çalışması için oyunun 'ServerScriptService'inde bir 'LocalScript' olarak yerleştirilmesi gerekiyor.
