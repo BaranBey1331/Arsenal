@@ -1,86 +1,81 @@
--- Değişkenler
-local AimRange = 100 -- Hedefleme mesafesi
-local AimSpeed = 0.1 -- Hedefleme hızı
-local Smoothness = 0.5 -- Hedefleme yumuşaklığı
-local Accuracy = 0.8 -- Hedefleme doğruluğu
-local Target = nil -- Hedef oyuncusu
+local AimbotFrame = game.CoreGui:FindFirstChild("AimbotFrame")
+local AimRange = 600 -- Hedefi hedefleme aralığı
+local AimSpeed = 0.1 -- Hedefe nişan alma hızı (0-1 arası)
+local TargetUpdateInterval = 0.1 -- Hedefi ne sıklıkla güncelleyeceğimiz (saniye cinsinden)
+local LastTargetUpdateTime = 0 -- Son hedef güncelleme zamanı
 
--- UI
-local AimbotFrame = Instance.new("Frame")
-AimbotFrame.Parent = game.CoreGui
-AimbotFrame.Position = UDim2.new(0.5, -100, 0.1, -100)
-AimbotFrame.Size = UDim2.new(0, 250, 0, 150)
-AimbotFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-AimbotFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
-AimbotFrame.CornerRadius = UDim.new(0, 10)
-AimbotFrame.Draggable = true
-
--- Hedefi bulma
 local function FindTarget()
     local ClosestTarget = nil
     local ClosestDistance = math.huge
     for _, Player in pairs(game.Players:GetPlayers()) do
         if Player ~= game.Players.LocalPlayer and Player.Character and Player.Character:FindFirstChild("Head") then
-            local Distance = (Player.Character.Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude
-            if Distance < ClosestDistance and Distance <= AimRange then
-                ClosestDistance = Distance
-                ClosestTarget = Player
+            local Head = Player.Character:FindFirstChild("Head")
+            if Head then
+                local Distance = (Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude
+                if Distance < ClosestDistance and Distance <= AimRange then
+                    ClosestDistance = Distance
+                    ClosestTarget = Player
+                end
             end
         end
     end
     return ClosestTarget
 end
 
--- Hedefi hedefleme
+local function UpdateTarget(Target)
+    -- Hedefi güncelleme işlemleri buraya gelecek
+    if Target then
+        AimbotFrame.TargetName.Text = Target.Name
+        AimbotFrame.TargetDistance.Text = "Mesafe: " .. tostring(math.floor((Target.Character.Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude))
+    else
+        AimbotFrame.TargetName.Text = "Hedef Yok"
+        AimbotFrame.TargetDistance.Text = ""
+    end
+end
+
 local function AimAtHead(Target)
+    -- Hedefin kafasına nişan alma işlemleri buraya gelecek
     if Target then
         local Head = Target.Character:FindFirstChild("Head")
         if Head then
-            local Mouse = game.UserInputService:GetMouseLocation()
-            local ScreenPoint = game.Workspace.CurrentCamera:WorldToScreenPoint(Head.Position)
-            if ScreenPoint.Z > 0 then
-                local DeltaX = ScreenPoint.X - Mouse.X
-                local DeltaY = ScreenPoint.Y - Mouse.Y
-                local AimX = Mouse.X + DeltaX * Smoothness * Accuracy * AimSpeed
-                local AimY = Mouse.Y + DeltaY * Smoothness * Accuracy * AimSpeed
-                game.UserInputService:SetMouseLocation(AimX, AimY)
+            local ScreenPos = game.Workspace.CurrentCamera:WorldToScreenPoint(Head.Position)
+            if ScreenPos then
+                local Mouse = game.Players.LocalPlayer:GetMouse()
+                local CurrentX = Mouse.X
+                local CurrentY = Mouse.Y
+                local TargetX = ScreenPos.X
+                local TargetY = ScreenPos.Y
+                local DifferenceX = TargetX - CurrentX
+                local DifferenceY = TargetY - CurrentY
+                Mouse.X = CurrentX + (DifferenceX * AimSpeed)
+                Mouse.Y = CurrentY + (DifferenceY * AimSpeed)
             end
         end
     end
 end
 
--- Hedefi güncelleme
-local function UpdateTarget(Target)
-    if Target then
-        if Target.Character and Target.Character:FindFirstChild("Humanoid") then
-            Target.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-            Target.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.None
-            Target.Character.Humanoid.Transparency = 0.5
-            Target.Character.Humanoid.Color = Color3.new(1, 0, 0)
-        end
-    end
-end
-
--- Hedefi temizleme
 local function ClearTarget(Target)
-    if Target then
-        if Target.Character and Target.Character:FindFirstChild("Humanoid") then
-            Target.Character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Classic
-            Target.Character.Humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.Classic
-            Target.Character.Humanoid.Transparency = 1
-            Target.Character.Humanoid.Color = Color3.new(1, 1, 1)
-        end
-    end
+    -- Hedefi temizleme işlemleri buraya gelecek
+    AimbotFrame.TargetName.Text = "Hedef Yok"
+    AimbotFrame.TargetDistance.Text = ""
 end
 
--- Döngü
 while true do
-    Target = FindTarget()
-    if Target then
-        UpdateTarget(Target)
-        AimAtHead(Target)
-    else
-        ClearTarget(Target)
+    if game.Players.LocalPlayer.Character then
+        if os.clock() - LastTargetUpdateTime >= TargetUpdateInterval then
+            local Target = FindTarget()
+            if Target then
+                UpdateTarget(Target)
+                AimAtHead(Target)
+            else
+                ClearTarget(Target)
+            end
+            LastTargetUpdateTime = os.clock()
+        end
+        AimAtHead(Target) -- Hedefi sürekli olarak hedefle
     end
-    wait(0.01)
+    wait(0.01) -- Döngüyü çalıştırmak için küçük bir gecikme
 end
+
+-- UI'nin kenarlarını yuvarlatma
+AimbotFrame.CornerRadius = UDim.new(0, 5)
