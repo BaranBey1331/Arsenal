@@ -2,6 +2,7 @@
 local AimbotFrame = Instance.new("Frame")
 AimbotFrame.Name = "AimbotFrame"
 AimbotFrame.Parent = game.CoreGui
+--game.CoreGui.Enabled = true -- CoreGui'yi etkinleştiriyoruz (Kaldırıldı)
 AimbotFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 AimbotFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 AimbotFrame.Size = UDim2.new(0, 200, 0, 150)
@@ -27,14 +28,14 @@ AimRangeSlider.Position = UDim2.new(0, 10, 0, 40)
 AimRangeSlider.Size = UDim2.new(0, 180, 0, 20)
 AimRangeSlider.MinValue = 100
 AimRangeSlider.MaxValue = 1000
-AimRangeSlider.Value = 600
+AimRangeSlider.Value = 200 -- Başlangıç değeri değiştirildi
 
 local AimRangeLabel = Instance.new("TextLabel")
 AimRangeLabel.Name = "AimRangeLabel"
 AimRangeLabel.Parent = AimbotFrame
 AimRangeLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 AimRangeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-AimRangeLabel.Text = "Hedef Aralığı: " .. tostring(AimRangeSlider.Value)
+AimRangeLabel.Text = "Hedef Aralığı: " .. tostring(AimRangeSlider.Value) -- Başlangıçta güncellendi
 AimRangeLabel.Font = Enum.Font.SourceSans
 AimRangeLabel.TextSize = 14
 AimRangeLabel.Position = UDim2.new(0, 10, 0, 70)
@@ -72,7 +73,7 @@ local function FindTarget()
     local ClosestDistance = math.huge
 
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
-        if Player ~= otherPlayer then
+        if Player ~= otherPlayer and otherPlayer.Team ~= Player.Team then -- Sadece düşmanları hedefle
             local otherCharacter = otherPlayer.Character or otherPlayer.CharacterAdded:Wait()
             if otherCharacter then
                 local otherRootPart = otherCharacter:WaitForChild("HumanoidRootPart")
@@ -91,7 +92,7 @@ local function FindTarget()
 end
 
 local function AimAtHead(target)
-    local targetHead = target:WaitForChild("Head")
+    local targetHead = target:FindFirstChild("Head") -- Head parçacığını arıyor
     if targetHead then
         local targetHeadCFrame = targetHead.CFrame
         local smoothFactor = 0.1
@@ -99,12 +100,15 @@ local function AimAtHead(target)
     end
 end
 
+-- AutoFire fonksiyonu kaldırıldı
+
 game:GetService("RunService").Heartbeat:Connect(function()
     if AimbotEnabled then
         local target = FindTarget()
         if target then
             TargetName.Text = "Hedef: " .. target.Parent.Name
             AimAtHead(target)
+            -- AutoFire() -- Otomatik ateş özelliği (Kaldırıldı)
         else
             TargetName.Text = "Hedef Yok"
         end
