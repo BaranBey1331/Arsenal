@@ -1,20 +1,84 @@
-local AimbotFrame = game.CoreGui:FindFirstChild("AimbotFrame")
-local AimRange = 600 -- Hedefi hedefleme aralığı
-local AimSpeed = 0.1 -- Hedefe nişan alma hızı (0-1 arası)
-local TargetUpdateInterval = 0.1 -- Hedefi ne sıklıkla güncelleyeceğimiz (saniye cinsinden)
-local LastTargetUpdateTime = 0 -- Son hedef güncelleme zamanı
+-- Aimbot Arayüzü
+local AimbotFrame = Instance.new("Frame")
+AimbotFrame.Name = "AimbotFrame"
+AimbotFrame.Parent = game.CoreGui
+AimbotFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimbotFrame.Position = UDim2.new(0.5, -100, 0.5, -100)
+AimbotFrame.Size = UDim2.new(0, 200, 0, 150)
+AimbotFrame.CornerRadius = UDim.new(0, 10)
 
+local TargetName = Instance.new("TextLabel")
+TargetName.Name = "TargetName"
+TargetName.Parent = AimbotFrame
+TargetName.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TargetName.TextColor3 = Color3.fromRGB(255, 255, 255)
+TargetName.Text = "Hedef Yok"
+TargetName.Font = Enum.Font.SourceSans
+TargetName.TextSize = 14
+TargetName.Position = UDim2.new(0, 10, 0, 10)
+TargetName.Size = UDim2.new(0, 180, 0, 20)
+
+local AimRangeSlider = Instance.new("Slider")
+AimRangeSlider.Name = "AimRangeSlider"
+AimRangeSlider.Parent = AimbotFrame
+AimRangeSlider.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimRangeSlider.ThumbColor3 = Color3.fromRGB(255, 0, 0)
+AimRangeSlider.Position = UDim2.new(0, 10, 0, 40)
+AimRangeSlider.Size = UDim2.new(0, 180, 0, 20)
+AimRangeSlider.MinValue = 100
+AimRangeSlider.MaxValue = 1000
+AimRangeSlider.Value = 600
+
+local AimRangeLabel = Instance.new("TextLabel")
+AimRangeLabel.Name = "AimRangeLabel"
+AimRangeLabel.Parent = AimbotFrame
+AimRangeLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimRangeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimRangeLabel.Text = "Hedef Aralığı: " .. AimRangeSlider.Value
+AimRangeLabel.Font = Enum.Font.SourceSans
+AimRangeLabel.TextSize = 12
+AimRangeLabel.Position = UDim2.new(0, 10, 0, 70)
+AimRangeLabel.Size = UDim2.new(0, 180, 0, 20)
+
+local AimbotToggle = Instance.new("TextButton")
+AimbotToggle.Name = "AimbotToggle"
+AimbotToggle.Parent = AimbotFrame
+AimbotToggle.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimbotToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimbotToggle.Text = "Aimbot: Kapalı"
+AimbotToggle.Font = Enum.Font.SourceSans
+AimbotToggle.TextSize = 14
+AimbotToggle.Position = UDim2.new(0, 10, 0, 100)
+AimbotToggle.Size = UDim2.new(0, 180, 0, 20)
+
+AimRangeSlider.Changed:Connect(function()
+    AimRangeLabel.Text = "Hedef Aralığı: " .. AimRangeSlider.Value
+end)
+
+-- Aimbot Kodu (Örnek)
+local function AimAtHead(Target)
+    if Target then
+        local TargetHead = Target.Character:FindFirstChild("Head")
+        if TargetHead then
+            local Mouse = game.Players.LocalPlayer:GetMouse()
+            Mouse.TargetPoint = TargetHead.Position
+            Mouse.TargetFilter = TargetHead
+        end
+    end
+end
+
+-- Hedef Bulma Fonksiyonu (Örnek)
 local function FindTarget()
     local ClosestTarget = nil
     local ClosestDistance = math.huge
     for _, Player in pairs(game.Players:GetPlayers()) do
-        if Player ~= game.Players.LocalPlayer and Player.Character and Player.Character:FindFirstChild("Head") then
-            local Head = Player.Character:FindFirstChild("Head")
-            if Head then
-                local Distance = (Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude
-                if Distance < ClosestDistance and Distance <= AimRange then
-                    ClosestDistance = Distance
+        if Player ~= game.Players.LocalPlayer then
+            local TargetCharacter = Player.Character
+            if TargetCharacter and TargetCharacter:FindFirstChild("Head") then
+                local Distance = (TargetCharacter.Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude
+                if Distance < ClosestDistance then
                     ClosestTarget = Player
+                    ClosestDistance = Distance
                 end
             end
         end
@@ -22,60 +86,20 @@ local function FindTarget()
     return ClosestTarget
 end
 
-local function UpdateTarget(Target)
-    -- Hedefi güncelleme işlemleri buraya gelecek
-    if Target then
-        AimbotFrame.TargetName.Text = Target.Name
-        AimbotFrame.TargetDistance.Text = "Mesafe: " .. tostring(math.floor((Target.Character.Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude))
-    else
-        AimbotFrame.TargetName.Text = "Hedef Yok"
-        AimbotFrame.TargetDistance.Text = ""
-    end
-end
-
-local function AimAtHead(Target)
-    -- Hedefin kafasına nişan alma işlemleri buraya gelecek
-    if Target then
-        local Head = Target.Character:FindFirstChild("Head")
-        if Head then
-            local ScreenPos = game.Workspace.CurrentCamera:WorldToScreenPoint(Head.Position)
-            if ScreenPos then
-                local Mouse = game.Players.LocalPlayer:GetMouse()
-                local CurrentX = Mouse.X
-                local CurrentY = Mouse.Y
-                local TargetX = ScreenPos.X
-                local TargetY = ScreenPos.Y
-                local DifferenceX = TargetX - CurrentX
-                local DifferenceY = TargetY - CurrentY
-                Mouse.X = CurrentX + (DifferenceX * AimSpeed)
-                Mouse.Y = CurrentY + (DifferenceY * AimSpeed)
-            end
-        end
-    end
-end
-
-local function ClearTarget(Target)
-    -- Hedefi temizleme işlemleri buraya gelecek
-    AimbotFrame.TargetName.Text = "Hedef Yok"
-    AimbotFrame.TargetDistance.Text = ""
-end
-
-while true do
-    if game.Players.LocalPlayer.Character then
-        local Target = FindTarget() -- Target değişkeni burada tanımlanmalı
-        if os.clock() - LastTargetUpdateTime >= TargetUpdateInterval then
+-- Aimbot'u etkinleştirmek için bu kodu çalıştırın
+AimbotToggle.MouseButton1Click:Connect(function()
+    if AimbotToggle.Text == "Aimbot: Açık" then
+        while true do
+            local Target = FindTarget()
             if Target then
-                UpdateTarget(Target)
                 AimAtHead(Target)
+                TargetName.Text = Target.Name
             else
-                ClearTarget(Target)
+                TargetName.Text = "Hedef Yok"
             end
-            LastTargetUpdateTime = os.clock()
+            wait(0.01)
         end
-        AimAtHead(Target) -- Hedefi sürekli olarak hedefle
+    else
+        TargetName.Text = "Hedef Yok"
     end
-    wait(0.01) -- Döngüyü çalıştırmak için küçük bir gecikme
-end
-
--- UI'nin kenarlarını yuvarlatma
-AimbotFrame.CornerRadius = UDim.new(0, 5)
+end)
