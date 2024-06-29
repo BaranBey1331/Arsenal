@@ -71,9 +71,9 @@ local function FindTarget()
     local ClosestDistance = math.huge
 
     for _, Player in ipairs(game.Players:GetPlayers()) do
-        if Player ~= game.Players.LocalPlayer then -- Oyuncunun kendisini hedeflemesini engelle
-            local TargetCharacter = Player.Character or Player.CharacterAdded:Wait()
-            if TargetCharacter and TargetCharacter.Humanoid and TargetCharacter.Humanoid.Health > 0 then
+        if Player ~= game.Players.LocalPlayer and Player.Character ~= nil then
+            local TargetCharacter = Player.Character
+            if TargetCharacter.Humanoid and TargetCharacter.Humanoid.Health > 0 then
                 local TargetPosition = TargetCharacter.Head.Position
                 local Distance = (TargetPosition - Character.Head.Position).Magnitude
 
