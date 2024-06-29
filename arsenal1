@@ -5,7 +5,7 @@ AimbotFrame.Parent = game.CoreGui
 AimbotFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 AimbotFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 AimbotFrame.Size = UDim2.new(0, 200, 0, 150)
-AimbotFrame.CornerRadius = UDim.new(0, 10)
+AimbotFrame.CornerRadius = 10 -- CornerRadius sadece bir sayı olmalı
 
 local TargetName = Instance.new("TextLabel")
 TargetName.Name = "TargetName"
