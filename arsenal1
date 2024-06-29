@@ -51,55 +51,75 @@ AimbotToggle.TextSize = 14
 AimbotToggle.Position = UDim2.new(0, 10, 0, 100)
 AimbotToggle.Size = UDim2.new(0, 180, 0, 20)
 
+-- Aimbot Fonksiyonları
+local AimbotEnabled = false
+local Target = nil
+
+local function FindTarget()
+    local Player = game.Players.LocalPlayer
+    local Character = Player.Character
+    if Character then
+        local Head = Character:FindFirstChild("Head")
+        if Head then
+            local ClosestTarget = nil
+            local ClosestDistance = math.huge
+            for _, Player in ipairs(game.Players:GetPlayers()) do
+                if Player ~= Player then
+                    local TargetCharacter = Player.Character
+                    if TargetCharacter then
+                        local TargetHead = TargetCharacter:FindFirstChild("Head")
+                        if TargetHead then
+                            local Distance = (Head.Position - TargetHead.Position).Magnitude
+                            if Distance < ClosestDistance then
+                                ClosestTarget = TargetHead
+                                ClosestDistance = Distance
+                            end
+                        end
+                    end
+                end
+            end
+            return ClosestTarget
+        end
+    end
+end
+
+local function AimAtHead(TargetHead)
+    local Player = game.Players.LocalPlayer
+    local Character = Player.Character
+    if Character then
+        local Head = Character:FindFirstChild("Head")
+        if Head then
+            local AimVector = (TargetHead.Position - Head.Position).Unit
+            local AimDirection = CFrame.lookAt(Head.Position, Head.Position + AimVector)
+            Character.HumanoidRootPart.CFrame = AimDirection
+        end
+    end
+end
+
+-- Aimbot Etkinleştirme/Devre Dışı Bırakma
+AimbotToggle.MouseButton1Click:Connect(function()
+    AimbotEnabled = not AimbotEnabled
+    if AimbotEnabled then
+        AimbotToggle.Text = "Aimbot: Açık"
+    else
+        AimbotToggle.Text = "Aimbot: Kapalı"
+    end
+end)
+
+-- Hedef Aralığı Güncelleme
 AimRangeSlider.Changed:Connect(function()
     AimRangeLabel.Text = "Hedef Aralığı: " .. AimRangeSlider.Value
 end)
 
--- Aimbot Kodu (Örnek)
-local function AimAtHead(Target)
-    if Target then
-        local TargetHead = Target.Character:FindFirstChild("Head")
-        if TargetHead then
-            local Mouse = game.Players.LocalPlayer:GetMouse()
-            Mouse.TargetPoint = TargetHead.Position
-            Mouse.TargetFilter = TargetHead
+-- Aimbot Döngüsü
+game:GetService("RunService").Heartbeat:Connect(function()
+    if AimbotEnabled then
+        Target = FindTarget()
+        if Target then
+            TargetName.Text = Target.Parent.Name
+            AimAtHead(Target)
+        else
+            TargetName.Text = "Hedef Yok"
         end
-    end
-end
-
--- Hedef Bulma Fonksiyonu (Örnek)
-local function FindTarget()
-    local ClosestTarget = nil
-    local ClosestDistance = math.huge
-    for _, Player in pairs(game.Players:GetPlayers()) do
-        if Player ~= game.Players.LocalPlayer then
-            local TargetCharacter = Player.Character
-            if TargetCharacter and TargetCharacter:FindFirstChild("Head") then
-                local Distance = (TargetCharacter.Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude
-                if Distance < ClosestDistance then
-                    ClosestTarget = Player
-                    ClosestDistance = Distance
-                end
-            end
-        end
-    end
-    return ClosestTarget
-end
-
--- Aimbot'u etkinleştirmek için bu kodu çalıştırın
-AimbotToggle.MouseButton1Click:Connect(function()
-    if AimbotToggle.Text == "Aimbot: Açık" then
-        while true do
-            local Target = FindTarget()
-            if Target then
-                AimAtHead(Target)
-                TargetName.Text = Target.Name
-            else
-                TargetName.Text = "Hedef Yok"
-            end
-            wait(0.01)
-        end
-    else
-        TargetName.Text = "Hedef Yok"
     end
 end)
