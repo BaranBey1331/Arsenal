@@ -2,15 +2,15 @@
 local AimbotFrame = Instance.new("Frame")
 AimbotFrame.Name = "AimbotFrame"
 AimbotFrame.Parent = game.CoreGui
-AimbotFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-AimbotFrame.Position = UDim2.new(0.5, -100, 0.5, -100)
+AimbotFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+AimbotFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 AimbotFrame.Size = UDim2.new(0, 200, 0, 150)
 AimbotFrame.CornerRadius = UDim.new(0, 10)
 
 local TargetName = Instance.new("TextLabel")
 TargetName.Name = "TargetName"
-TargetName.Parent = AimbotFrame -- CoreGui'ye değil, AimbotFrame'e ekle
-TargetName.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TargetName.Parent = AimbotFrame
+TargetName.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 TargetName.TextColor3 = Color3.fromRGB(255, 255, 255)
 TargetName.Text = "Hedef Yok"
 TargetName.Font = Enum.Font.SourceSans
@@ -21,7 +21,7 @@ TargetName.Size = UDim2.new(0, 180, 0, 20)
 local AimRangeSlider = Instance.new("Slider")
 AimRangeSlider.Name = "AimRangeSlider"
 AimRangeSlider.Parent = AimbotFrame
-AimRangeSlider.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimRangeSlider.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 AimRangeSlider.ThumbColor3 = Color3.fromRGB(255, 0, 0)
 AimRangeSlider.Position = UDim2.new(0, 10, 0, 40)
 AimRangeSlider.Size = UDim2.new(0, 180, 0, 20)
@@ -32,94 +32,85 @@ AimRangeSlider.Value = 600
 local AimRangeLabel = Instance.new("TextLabel")
 AimRangeLabel.Name = "AimRangeLabel"
 AimRangeLabel.Parent = AimbotFrame
-AimRangeLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimRangeLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 AimRangeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-AimRangeLabel.Text = "Hedef Aralığı: " .. AimRangeSlider.Value
+AimRangeLabel.Text = "Hedef Aralığı: " .. tostring(AimRangeSlider.Value)
 AimRangeLabel.Font = Enum.Font.SourceSans
-AimRangeLabel.TextSize = 12
+AimRangeLabel.TextSize = 14
 AimRangeLabel.Position = UDim2.new(0, 10, 0, 70)
 AimRangeLabel.Size = UDim2.new(0, 180, 0, 20)
 
 local AimbotToggle = Instance.new("TextButton")
 AimbotToggle.Name = "AimbotToggle"
 AimbotToggle.Parent = AimbotFrame
-AimbotToggle.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+AimbotToggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 AimbotToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-AimbotToggle.Text = "Aimbot: Kapalı"
+AimbotToggle.Text = "Aimbot Etkin"
 AimbotToggle.Font = Enum.Font.SourceSans
 AimbotToggle.TextSize = 14
 AimbotToggle.Position = UDim2.new(0, 10, 0, 100)
 AimbotToggle.Size = UDim2.new(0, 180, 0, 20)
 
--- Aimbot Fonksiyonları
 local AimbotEnabled = false
-local Target = nil
 
-local function FindTarget()
-    local Player = game.Players.LocalPlayer
-    local Character = Player.Character
-    if Character then
-        local Head = Character:FindFirstChild("Head")
-        if Head then
-            local ClosestTarget = nil
-            local ClosestDistance = math.huge
-            for _, Player in ipairs(game.Players:GetPlayers()) do
-                if Player ~= Player then
-                    local TargetCharacter = Player.Character
-                    if TargetCharacter then
-                        local TargetHead = TargetCharacter:FindFirstChild("Head")
-                        if TargetHead then
-                            local Distance = (Head.Position - TargetHead.Position).Magnitude
-                            if Distance < ClosestDistance then
-                                ClosestTarget = TargetHead
-                                ClosestDistance = Distance
-                            end
-                        end
-                    end
-                end
-            end
-            return ClosestTarget
-        end
-    end
-end
-
-local function AimAtHead(TargetHead)
-    local Player = game.Players.LocalPlayer
-    local Character = Player.Character
-    if Character then
-        local Head = Character:FindFirstChild("Head")
-        if Head then
-            local AimVector = (TargetHead.Position - Head.Position).Unit
-            local AimDirection = CFrame.lookAt(Head.Position, Head.Position + AimVector)
-            Character.HumanoidRootPart.CFrame = AimDirection
-        end
-    end
-end
-
--- Aimbot Etkinleştirme/Devre Dışı Bırakma
 AimbotToggle.MouseButton1Click:Connect(function()
     AimbotEnabled = not AimbotEnabled
     if AimbotEnabled then
-        AimbotToggle.Text = "Aimbot: Açık"
+        AimbotToggle.Text = "Aimbot Etkin"
     else
-        AimbotToggle.Text = "Aimbot: Kapalı"
+        AimbotToggle.Text = "Aimbot Devre Dışı"
     end
 end)
 
--- Hedef Aralığı Güncelleme
-AimRangeSlider.Changed:Connect(function()
-    AimRangeLabel.Text = "Hedef Aralığı: " .. AimRangeSlider.Value
-end)
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local RootPart = Character:WaitForChild("HumanoidRootPart")
 
--- Aimbot Döngüsü
+local function FindTarget()
+    local ClosestTarget = nil
+    local ClosestDistance = math.huge
+
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if Player ~= otherPlayer then
+            local otherCharacter = otherPlayer.Character or otherPlayer.CharacterAdded:Wait()
+            if otherCharacter then
+                local otherRootPart = otherCharacter:WaitForChild("HumanoidRootPart")
+                if otherRootPart then
+                    local distance = (RootPart.Position - otherRootPart.Position).Magnitude
+                    if distance < ClosestDistance and distance <= AimRangeSlider.Value then
+                        ClosestTarget = otherRootPart
+                        ClosestDistance = distance
+                    end
+                end
+            end
+        end
+    end
+
+    return ClosestTarget
+end
+
+local function AimAtHead(target)
+    local targetHead = target:WaitForChild("Head")
+    if targetHead then
+        local targetHeadCFrame = targetHead.CFrame
+        local smoothFactor = 0.1
+        RootPart.CFrame = RootPart.CFrame:lerp(targetHeadCFrame, smoothFactor)
+    end
+end
+
 game:GetService("RunService").Heartbeat:Connect(function()
     if AimbotEnabled then
-        Target = FindTarget()
-        if Target then
-            TargetName.Text = Target.Parent.Name
-            AimAtHead(Target)
+        local target = FindTarget()
+        if target then
+            TargetName.Text = "Hedef: " .. target.Parent.Name
+            AimAtHead(target)
         else
             TargetName.Text = "Hedef Yok"
         end
     end
+end)
+
+AimRangeSlider.Changed:Connect(function()
+    AimRangeLabel.Text = "Hedef Aralığı: " .. tostring(AimRangeSlider.Value)
 end)
