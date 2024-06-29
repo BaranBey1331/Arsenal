@@ -2,9 +2,9 @@ local AimbotFrame = Instance.new("Frame")
 AimbotFrame.Name = "AimbotFrame"
 AimbotFrame.Parent = game.CoreGui
 AimbotFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-AimbotFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+AimbotFrame.Position = UDim2.new(0.5, 0, 0.1, 0) -- Üstten hareket edebilmesi için Position ayarlandı
 AimbotFrame.Size = UDim2.new(0, 200, 0, 150)
-AimbotFrame.CornerRadius = 10
+-- AimbotFrame.CornerRadius = 10 -- Köşe yuvarlatma özelliği kaldırıldı
 
 local TargetName = Instance.new("TextLabel")
 TargetName.Name = "TargetName"
@@ -71,7 +71,7 @@ local function FindTarget()
     local ClosestDistance = math.huge
 
     for _, Player in ipairs(game.Players:GetPlayers()) do
-        if Player ~= Player then
+        if Player ~= Player then -- Bu satırda Player ~= Player, Player ~= LocalPlayer olmalı
             local TargetCharacter = Player.Character or Player.CharacterAdded:Wait()
             if TargetCharacter and TargetCharacter.Humanoid and TargetCharacter.Humanoid.Health > 0 then
                 local TargetPosition = TargetCharacter.Head.Position
