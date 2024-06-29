@@ -4,7 +4,7 @@ AimbotFrame.Parent = game.CoreGui
 AimbotFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 AimbotFrame.Position = UDim2.new(0.5, 0, 0.1, 0)
 AimbotFrame.Size = UDim2.new(0, 200, 0, 150)
-AimbotFrame.CornerRadius = 10
+-- CornerRadius kaldırıldı
 
 local TargetName = Instance.new("TextLabel")
 TargetName.Name = "TargetName"
@@ -71,13 +71,13 @@ local function FindTarget()
     local ClosestDistance = math.huge
 
     for _, Player in ipairs(game.Players:GetPlayers()) do
-        if Player ~= LocalPlayer then
+        if Player ~= game.Players.LocalPlayer then -- Oyuncunun kendisini hedeflemesini engelle
             local TargetCharacter = Player.Character or Player.CharacterAdded:Wait()
             if TargetCharacter and TargetCharacter.Humanoid and TargetCharacter.Humanoid.Health > 0 then
                 local TargetPosition = TargetCharacter.Head.Position
                 local Distance = (TargetPosition - Character.Head.Position).Magnitude
 
-                if Distance <= AimRangeSlider.Value and Distance < ClosestDistance then -- <= eklendi
+                if Distance <= AimRangeSlider.Value and Distance < ClosestDistance then
                     ClosestTarget = TargetCharacter
                     ClosestDistance = Distance
                 end
