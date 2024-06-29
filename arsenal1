@@ -2,9 +2,9 @@ local AimbotFrame = Instance.new("Frame")
 AimbotFrame.Name = "AimbotFrame"
 AimbotFrame.Parent = game.CoreGui
 AimbotFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-AimbotFrame.Position = UDim2.new(0.5, 0, 0.1, 0) -- Üstten hareket edebilmesi için Position ayarlandı
+AimbotFrame.Position = UDim2.new(0.5, 0, 0.1, 0)
 AimbotFrame.Size = UDim2.new(0, 200, 0, 150)
--- AimbotFrame.CornerRadius = 10 -- Köşe yuvarlatma özelliği kaldırıldı
+AimbotFrame.CornerRadius = 10
 
 local TargetName = Instance.new("TextLabel")
 TargetName.Name = "TargetName"
@@ -71,13 +71,13 @@ local function FindTarget()
     local ClosestDistance = math.huge
 
     for _, Player in ipairs(game.Players:GetPlayers()) do
-        if Player ~= Player then -- Bu satırda Player ~= Player, Player ~= LocalPlayer olmalı
+        if Player ~= LocalPlayer then
             local TargetCharacter = Player.Character or Player.CharacterAdded:Wait()
             if TargetCharacter and TargetCharacter.Humanoid and TargetCharacter.Humanoid.Health > 0 then
                 local TargetPosition = TargetCharacter.Head.Position
                 local Distance = (TargetPosition - Character.Head.Position).Magnitude
 
-                if Distance < AimRangeSlider.Value and Distance < ClosestDistance then
+                if Distance <= AimRangeSlider.Value and Distance < ClosestDistance then -- <= eklendi
                     ClosestTarget = TargetCharacter
                     ClosestDistance = Distance
                 end
@@ -106,3 +106,30 @@ local function AimbotLoop()
 end
 
 game:GetService("RunService").Heartbeat:Connect(AimbotLoop)
+
+-- Ek Güvenlik Önlemleri
+local function CheckForUpdates()
+    -- Oyun güncellemelerini kontrol et ve gerekirse aimbot'u güncelle.
+    -- Örneğin, oyunun anti-cheat sistemi güncellendiyse, aimbot'u da güncellemelisin.
+end
+
+local function CheckForDetection()
+    -- Anti-cheat sistemlerinin aimbot'u tespit edip etmediğini kontrol et.
+    -- Gerekirse, aimbot'u gizlemek için bazı önlemler al.
+end
+
+-- Her 10 saniyede bir kontrol et
+local UpdateInterval = 10
+local DetectionInterval = 10
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if AimbotEnabled then
+        if game:GetService("RunService").Heartbeat:Wait() % UpdateInterval == 0 then
+            CheckForUpdates()
+        end
+
+        if game:GetService("RunService").Heartbeat:Wait() % DetectionInterval == 0 then
+            CheckForDetection()
+        end
+    end
+end)
